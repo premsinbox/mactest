@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Odometer Reader',
+      title: 'Odometer Scanner',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -85,37 +85,43 @@ class _OdometerScannerState extends State<OdometerScanner> {
     await croppedFile.writeAsBytes(img.encodeJpg(croppedImage));
     return croppedFile;
   }
-Future<void> _scanOdometer() async {
-  if (_isProcessing) return;
-  setState(() => _isProcessing = true);
 
-  try {
-    // Capture Image
-    final XFile imageFile = await _cameraController.takePicture();
-    final File croppedFile = await _cropToRectangle(File(imageFile.path));
-
-    // Recognize Text
-    final inputImage = InputImage.fromFilePath(croppedFile.path);
+  Future<String> _extractMeterNumber(File imageFile) async {
+    final inputImage = InputImage.fromFilePath(imageFile.path);
     final recognizedText = await _textRecognizer.processImage(inputImage);
 
-    // Extract numbers using regex
     final RegExp odometerRegex = RegExp(r'^\d{6,8}$');
     final odometerMatches = recognizedText.blocks
         .map((block) => block.text)
         .where((text) => odometerRegex.hasMatch(text))
         .toList();
 
-    final odometerValue = odometerMatches.isNotEmpty
-        ? odometerMatches.join(', ')
-        : "No odometer value found";
-
-    setState(() => _odometerValue = odometerValue);
-  } catch (e) {
-    setState(() => _odometerValue = "Error: ${e.toString()}");
+    if (odometerMatches.isNotEmpty) {
+      return odometerMatches.first;
+    } else {
+      return "No meter number found";
+    }
   }
 
-  setState(() => _isProcessing = false);
-}
+  Future<void> _scanOdometer() async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+
+    try {
+      // Capture Image
+      final XFile imageFile = await _cameraController.takePicture();
+      final File croppedFile = await _cropToRectangle(File(imageFile.path));
+
+      // Extract meter number
+      final meterNumber = await _extractMeterNumber(croppedFile);
+
+      setState(() => _odometerValue = meterNumber);
+    } catch (e) {
+      setState(() => _odometerValue = "Error: ${e.toString()}");
+    }
+
+    setState(() => _isProcessing = false);
+  }
 
   @override
   void dispose() {

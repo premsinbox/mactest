@@ -80,45 +80,42 @@ class _OdometerScannerState extends State<OdometerScanner> {
     final int cropWidth = (rectWidth * scaleX).toInt();
     final int cropHeight = (rectHeight * scaleY).toInt();
 
-    final croppedImage = img.copyCrop(image, x:cropX, y:cropY, width:cropWidth,height: cropHeight);
-
+    final img.Image croppedImage = img.copyCrop(image, x:cropX, y:cropY, width:cropWidth,height: cropHeight);
     final croppedFile = File('${imageFile.path}_cropped.jpg');
     await croppedFile.writeAsBytes(img.encodeJpg(croppedImage));
     return croppedFile;
   }
+Future<void> _scanOdometer() async {
+  if (_isProcessing) return;
+  setState(() => _isProcessing = true);
 
-  Future<void> _scanOdometer() async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
+  try {
+    // Capture Image
+    final XFile imageFile = await _cameraController.takePicture();
+    final File croppedFile = await _cropToRectangle(File(imageFile.path));
 
-    try {
-      // Capture Image
-      final XFile imageFile = await _cameraController.takePicture();
-      final File croppedFile = await _cropToRectangle(File(imageFile.path));
+    // Recognize Text
+    final inputImage = InputImage.fromFilePath(croppedFile.path);
+    final recognizedText = await _textRecognizer.processImage(inputImage);
 
-      // Recognize Text
-      final inputImage = InputImage.fromFilePath(croppedFile.path);
-      final recognizedText = await _textRecognizer.processImage(inputImage);
+    // Extract numbers using regex
+    final RegExp odometerRegex = RegExp(r'^\d{6,8}$');
+    final odometerMatches = recognizedText.blocks
+        .map((block) => block.text)
+        .where((text) => odometerRegex.hasMatch(text))
+        .toList();
 
-      // Extract numbers using regex
-      final RegExp odometerRegex = RegExp(r'^\d{6,8}$');
-      final odometerMatches = recognizedText.blocks
-          .where((block) =>  0 > 0.8) // Confidence threshold
-          .map((block) => block.text)
-          .where((text) => odometerRegex.hasMatch(text))
-          .toList();
+    final odometerValue = odometerMatches.isNotEmpty
+        ? odometerMatches.join(', ')
+        : "No odometer value found";
 
-      final odometerValue = odometerMatches.isNotEmpty
-          ? odometerMatches.join(', ')
-          : "No odometer value found";
-
-      setState(() => _odometerValue = odometerValue);
-    } catch (e) {
-      setState(() => _odometerValue = "Error: ${e.toString()}");
-    }
-
-    setState(() => _isProcessing = false);
+    setState(() => _odometerValue = odometerValue);
+  } catch (e) {
+    setState(() => _odometerValue = "Error: ${e.toString()}");
   }
+
+  setState(() => _isProcessing = false);
+}
 
   @override
   void dispose() {
