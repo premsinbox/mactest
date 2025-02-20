@@ -48,6 +48,10 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/language.json
+
   # assets:
   #   - assets/tessdata/eng.traineddata
 
