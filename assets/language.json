@@ -1,0 +1,28 @@
+{
+    "open": {
+      "en": "Open",
+      "ta": "திறக்கவும்",
+      "fr": "Ouvrir"
+    },
+    "close": {
+      "en": "Close",
+      "ta": "மூடுங்கள்",
+      "fr": "Fermer"
+    },
+    "save": {
+      "en": "Save",
+      "ta": "சேமி",
+      "fr": "Sauvegarder"
+    },
+    "cancel": {
+      "en": "Cancel",
+      "ta": "ரத்து",
+      "fr": "Annuler"
+    },
+    "submit": {
+      "en": "Submit",
+      "ta": "சமர்ப்பிக்கவும்",
+      "fr": "Soumettre"
+    }
+  }
+  
